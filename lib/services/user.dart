@@ -57,6 +57,7 @@ class UserService {
           status: true,
           message: "Sukses login user",
           data: data,
+          role: data["user"]['role']
         );
         return response;
       } else {

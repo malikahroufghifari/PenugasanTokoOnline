@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:penugasan_tokoonline/models/user_login.dart';
+import 'package:penugasan_tokoonline/widgets/bottom_nav.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -34,6 +35,7 @@ class _DashboardViewState extends State<DashboardView> {
     return Scaffold(
       backgroundColor: Colors.deepPurple.shade50,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Home"),
         centerTitle: true,
         backgroundColor: Colors.deepPurple.shade400,
@@ -111,6 +113,7 @@ class _DashboardViewState extends State<DashboardView> {
           ],
         ),
       ),
+      bottomNavigationBar: BottomNav(0),
     );
   }
 }

@@ -2,5 +2,6 @@ class ResponseDataMap {
 bool status;
 String message;
 Map? data;
-ResponseDataMap({required this.status, required this.message, this.data});
+String? role;
+ResponseDataMap({required this.status, required this.message, this.data, this.role});
 }
