@@ -9,7 +9,7 @@ const Color backgroundSoft = Color(0xFFDAF1DE);
 
 class BottomNav extends StatefulWidget {
   int activePage;
-  BottomNav(this.activePage);
+  BottomNav(this.activePage, {super.key});
   @override
   State<BottomNav> createState() => _BottomNavState();
 }
@@ -17,8 +17,8 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   UserLogin userLogin = UserLogin();
   String? role;
-  getDataLogin() async {
-    var user = await userLogin!.getUserLogin();
+  Future<void> getDataLogin() async {
+    var user = await userLogin.getUserLogin();
     if (user!.status != false) {
       setState(() {
         role = user.role;

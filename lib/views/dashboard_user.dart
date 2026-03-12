@@ -45,7 +45,7 @@ class _DashboardUserViewState extends State<DashboardUserView> {
     },
   ];
 
-  getUserLogin() async {
+  Future<void> getUserLogin() async {
     var user = await userLogin.getUserLogin();
     if (user.status != false) {
       setState(() {

@@ -158,7 +158,7 @@ class _LoginViewState extends State<LoginView> {
                                   var data = {
                                     "email": email.text,
                                     "password": password.text,
-                                  };
+                                  }; 
 
                                   var result = await user.loginUser(data);
 

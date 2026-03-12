@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AlertMessage {
-  showAlert(BuildContext context, message, status) {
+  void showAlert(BuildContext context, message, status) {
     Color? warnafill;
     Color warnagaris;
     if (status) {

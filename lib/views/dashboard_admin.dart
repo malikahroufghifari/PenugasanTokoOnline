@@ -18,7 +18,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
   UserLogin userLogin = UserLogin();
   String? nama;
   String? role;
-  getUserLogin() async {
+  Future<void> getUserLogin() async {
     var user = await userLogin.getUserLogin();
     if (user.status != false) {
       setState(() {
@@ -47,7 +47,7 @@ class _DashboardAdminViewState extends State<DashboardAdminView> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: const BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [primary, accent],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
