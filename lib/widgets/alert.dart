@@ -50,4 +50,34 @@ class AlertMessage {
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
+
+  Future showAlertDialog(BuildContext context) {
+    Widget cancelButton = MaterialButton(
+      shape: BeveledRectangleBorder(side: BorderSide()),
+      child: Text("Cancel"),
+      onPressed: () {
+        Navigator.of(context).pop({'status': false});
+      },
+    );
+
+    Widget continueButton = MaterialButton(
+      shape: BeveledRectangleBorder(side: BorderSide()),
+      child: Text("Continue"),
+      onPressed: () {
+        Navigator.of(context).pop({'status': true});
+      },
+    );
+
+    AlertDialog alert = AlertDialog(
+      title: Text("AlertDialog"),
+      content: Text("Hai"),
+      actions: [cancelButton, continueButton],
+    );
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
 }
