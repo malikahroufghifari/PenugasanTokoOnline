@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:penugasan_tokoonline/views/dashboard_admin.dart';
 import 'package:penugasan_tokoonline/views/dashboard_user.dart';
 import 'package:penugasan_tokoonline/views/etalase_admin.dart';
+import 'package:penugasan_tokoonline/views/keranjang.dart';
 import 'package:penugasan_tokoonline/views/login_view.dart';
+import 'package:penugasan_tokoonline/views/pesan_view.dart';
 import 'package:penugasan_tokoonline/views/register_user_view.dart';
 import 'package:penugasan_tokoonline/views/riwayat_pesanan.dart';
 import 'package:penugasan_tokoonline/views/splashscreen.dart';
@@ -17,9 +19,12 @@ void main() {
         '/register': (context) => RegisterUserView(),
         '/login': (context) => LoginView(),
         '/dashboardAdmin': (context) => DashboardAdminView(),
-        '/dashboardUser': (context) => DashboardUserView(),
-        '/riwayatPesan': (context) => RiwayatPesananUser(),
         '/etalaseAdmin': (context) => EtalaseAdminView(),
+        '/dashboardUser': (context) => DashboardUserView(),
+        '/pesanUser' : (context) => PesanView(),
+        '/keranjang': (context)=> CartScreen(),
+        '/riwayatPesan': (context) => RiwayatPesananUser(),
+        
       },
     ),
   );

@@ -46,6 +46,8 @@ class _BottomNavState extends State<BottomNav> {
       if (index == 0) {
         Navigator.pushReplacementNamed(context, '/dashboardUser');
       } else if (index == 1) {
+        Navigator.pushReplacementNamed(context, '/pesanUser');
+      } else if (index == 2){
         Navigator.pushReplacementNamed(context, '/riwayatPesan');
       }
     }
@@ -101,6 +103,7 @@ class _BottomNavState extends State<BottomNav> {
             ),
             items: [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: 'Pesan'),
               BottomNavigationBarItem(
                 icon: Icon(Icons.receipt_long_rounded),
                 label: 'Riwayat Pesanan',

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:penugasan_tokoonline/models/product_model.dart';
+import 'package:penugasan_tokoonline/models/response_data_list.dart';
 import 'package:penugasan_tokoonline/models/response_data_map.dart';
 import 'package:penugasan_tokoonline/models/user_login.dart';
 import 'package:penugasan_tokoonline/services/url.dart' as url;
@@ -57,7 +59,7 @@ class UserService {
           status: true,
           message: "Sukses login user",
           data: data,
-          role: data["user"]['role']
+          role: data["user"]['role'],
         );
         return response;
       } else {
