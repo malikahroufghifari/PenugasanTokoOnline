@@ -134,15 +134,6 @@ class _DashboardUserViewState extends State<DashboardUserView> {
                       children: [
                         IconButton(
                           onPressed: () {
-                            // TODO: arahkan ke halaman keranjang
-                          },
-                          icon: const Icon(
-                            Icons.shopping_cart_rounded,
-                            color: Colors.white,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {
                             Navigator.popAndPushNamed(context, '/login');
                           },
                           icon: const Icon(Icons.logout, color: Colors.white,),

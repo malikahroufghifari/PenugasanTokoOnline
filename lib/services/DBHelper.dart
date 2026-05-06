@@ -16,8 +16,10 @@ class DBHelper {
   initDatabase() async {
     io.Directory directory = await getApplicationDocumentsDirectory();
     String path = join(directory.path, 'cart.db');
-    var db = await databaseFactory.openDatabase(path,
-    options: OpenDatabaseOptions( version: 1, onCreate: _onCreate));
+    var db = await databaseFactory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(version: 1, onCreate: _onCreate),
+    );
     return db;
   }
 
@@ -89,5 +91,10 @@ class DBHelper {
   Future<int> deleteCartItem(int id) async {
     var dbClient = await database;
     return await dbClient!.delete('cart', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> clearCart() async {
+    var dbClient = await database;
+    return await dbClient!.delete('cart');
   }
 }

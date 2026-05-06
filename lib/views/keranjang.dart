@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:penugasan_tokoonline/controllers/cartProvider.dart';
 import 'package:penugasan_tokoonline/services/DBHelper.dart';
@@ -21,23 +22,51 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   var dBHelper = DBHelper();
-  final cartProvider = CartProvider();
-
-  void updateCount() async {
-    await cartProvider.getData();
-    setState(() {
-      cartProvider.counter = cartProvider.cart.length;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
-    updateCount();
+    // refresh data keranjang dari DB saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartProvider>().getData();
+    });
+  }
+
+  Future<void> _checkout(CartProvider cartProvider) async {
+    List dataList = cartProvider.cart.map((i) {
+      return {"barang_id": i.barang_id, "qty": i.quantity};
+    }).toList();
+
+    var data = {"pesan": dataList};
+    var result = await Pesan().saveToDB(data);
+
+    if (!mounted) return;
+
+    if (result.status == true) {
+      // kosongkan keranjang setelah checkout berhasil
+      await dBHelper.clearCart();
+      cartProvider.getData();
+
+      AlertMessage().showAlert(context, "Anda berhasil beli", true);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/riwayatPesan',
+        (Route<dynamic> route) => false,
+      );
+    } else {
+      // tampilkan pesan gagal yang benar
+      AlertMessage().showAlert(
+        context,
+        result.message ?? "Checkout gagal, coba lagi",
+        false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cartProvider = context.watch<CartProvider>();
+
     return Scaffold(
       backgroundColor: backgroundSoft,
       appBar: AppBar(
@@ -51,42 +80,24 @@ class _CartScreenState extends State<CartScreen> {
         ),
         actions: [
           badges.Badge(
-            badgeContent: ListenableBuilder(
-              listenable: cartProvider,
-              builder: (context, child) {
-                if (cartProvider.cart.isEmpty) {
-                  return Text(
-                    '0',
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                } else {
-                  return Text(
-                    '${cartProvider.counter}',
-                    style: const TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                }
-              },
+            badgeContent: Text(
+              '${cartProvider.cart.length}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             position: badges.BadgePosition.topEnd(top: 0, end: 2),
             child: IconButton(
               onPressed: () {},
-              icon: Icon(Icons.shopping_cart),
+              icon: const Icon(Icons.shopping_cart),
             ),
           ),
-          SizedBox(width: 20.0),
+          const SizedBox(width: 20.0),
         ],
       ),
-      body: ListenableBuilder(
-        listenable: cartProvider,
-        builder: (context, child) {
-          if (cartProvider.cart.isEmpty) {
-            return Center(
+      body: cartProvider.cart.isEmpty
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -106,12 +117,13 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ],
               ),
-            );
-          } else {
-            return ListView.builder(
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(12.0),
               shrinkWrap: true,
               itemCount: cartProvider.cart.length,
               itemBuilder: (context, index) {
+                final item = cartProvider.cart[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -129,40 +141,48 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.all(10.0),
                     child: Row(
                       children: [
-                        Image(
-                          height: 85,
-                          width: 85,
-                          image: NetworkImage(
-                            cartProvider.cart[index].posterpath!,
+                        // gambar produk dengan fallback kalau gagal load
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            item.posterpath!,
+                            height: 85,
+                            width: 85,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 85,
+                                  width: 85,
+                                  color: soft.withOpacity(0.3),
+                                  child: const Icon(
+                                    Icons.inventory_2,
+                                    color: primary,
+                                  ),
+                                ),
                           ),
                         ),
-
-                        SizedBox(width: 12),
-
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(height: 5.0),
-                              RichText(
+                              Text(
+                                item.title ?? "-",
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                text: TextSpan(
-                                  text: "Produk: ",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16.0,
-                                    color: primaryDark,
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text:
-                                          '${cartProvider.cart[index].title!}\n',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15.0,
+                                  color: primaryDark,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Rp ${item.harga_beli?.toStringAsFixed(0) ?? 0}",
+                                style: const TextStyle(
+                                  color: accent,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
                                 ),
                               ),
                             ],
@@ -170,28 +190,19 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         PlusMinusButtons(
                           addQuantity: () {
-                            cartProvider.addQuantity(
-                              cartProvider.cart[index].id!,
-                            );
+                            cartProvider.addQuantity(item.id!);
                           },
                           deleteQuantity: () {
-                            cartProvider.deleteQuantity(
-                              cartProvider.cart[index].id!,
-                            );
+                            cartProvider.deleteQuantity(item.id!);
                           },
-                          text: cartProvider.cart[index].quantity.toString(),
+                          text: item.quantity.toString(),
                         ),
                         IconButton(
-                          onPressed: () {
-                            dBHelper.deleteCartItem(
-                              cartProvider.cart[index].id!,
-                            );
-                            cartProvider.removeItem(
-                              cartProvider.cart[index].id!,
-                            );
-                            cartProvider.removeCounter();
+                          onPressed: () async {
+                            await dBHelper.deleteCartItem(item.id!);
+                            cartProvider.removeItem(item.id!);
                           },
-                          icon: Icon(
+                          icon: const Icon(
                             Icons.delete_outline_rounded,
                             color: Colors.redAccent,
                             size: 28,
@@ -202,39 +213,20 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 );
               },
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        tooltip: "Settings",
-        backgroundColor: accent,
-        foregroundColor: Colors.white,
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        onPressed: () async {
-          List dataList = cartProvider.cart.map((i) {
-            return {"barang_id": i.barang_id, "qty": i.quantity};
-          }).toList();
-          var data = {"pesan": dataList};
-          var result = await Pesan().saveToDB(data);
-          if (result.status == true) {
-            AlertMessage().showAlert(context, "Anda berhasil beli", true);
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              '/riwayatPesan',
-              (Route<dynamic> route) => false,
-            );
-          } else {
-            AlertMessage().showAlert(context, "Anda berhasil beli", true);
-          }
-        },
-        icon: const Icon(
-          Icons.shopping_cart_checkout_rounded,
-          color: Colors.white,
-        ),
-        label: const Text("Checkout"),
-      ),
+            ),
+      floatingActionButton: cartProvider.cart.isEmpty
+          ? null // sembunyikan tombol checkout kalau keranjang kosong
+          : FloatingActionButton.extended(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+              elevation: 5,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              onPressed: () => _checkout(cartProvider),
+              icon: const Icon(Icons.shopping_cart_checkout_rounded),
+              label: const Text("Checkout"),
+            ),
     );
   }
 }

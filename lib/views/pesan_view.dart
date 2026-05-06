@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:penugasan_tokoonline/controllers/cartProvider.dart';
 import 'package:penugasan_tokoonline/models/cart_model.dart';
 import 'package:penugasan_tokoonline/services/DBHelper.dart';
@@ -21,23 +22,16 @@ class PesanView extends StatefulWidget {
 
 class _PesanViewState extends State<PesanView> {
   var dBHelper = DBHelper();
-  final cartProvider = CartProvider();
   List? barang;
-  getBarang() async {
+
+  Future<void> getBarang() async {
     var result = await ProductService().getBarangUser();
     setState(() {
       barang = result.data;
     });
   }
 
-  void updateCount() async {
-    await cartProvider.getData();
-    setState(() {
-      cartProvider.counter = cartProvider.cart.length;
-    });
-  }
-
-  void saveData(int index) async {
+  Future<void> saveData(int index, CartProvider cartProvider) async {
     var detail = await dBHelper.getCartListDetail(barang![index].id);
     int qty = 0;
     if (detail != null && detail.isNotEmpty) {
@@ -46,7 +40,7 @@ class _PesanViewState extends State<PesanView> {
     dBHelper
         .insert(
           Cart(
-            id: index,
+            id: barang![index].id,
             barang_id: barang![index].id.toString(),
             title: barang![index].title,
             quantity: qty + 1,
@@ -54,26 +48,31 @@ class _PesanViewState extends State<PesanView> {
             posterpath: barang![index].posterPath,
           ),
         )
-        .then((value) {
-          updateCount();
-          print('Product Added to Cart');
+        .then((_) {
+          // refresh dari DB → otomatis notify semua listener termasuk badge
+          cartProvider.getData();
+          debugPrint('Product Added to Cart');
         })
-    .onError((error, stackTrace) {
-      print(error.toString());
-    })
-    ;
+        .onError((error, stackTrace) {
+          debugPrint(error.toString());
+        });
   }
 
   @override
   void initState() {
-    //TODO: implement initState
     super.initState();
     getBarang();
-    updateCount();
+    // ambil data keranjang dari DB saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CartProvider>().getData();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // watch → widget rebuild otomatis saat cart berubah
+    final cartProvider = context.watch<CartProvider>();
+
     return Scaffold(
       backgroundColor: backgroundSoft,
       appBar: AppBar(
@@ -87,34 +86,19 @@ class _PesanViewState extends State<PesanView> {
         ),
         actions: [
           badges.Badge(
-            badgeContent: ListenableBuilder(
-              listenable: cartProvider,
-              builder: (context, child) {
-                if (cartProvider.cart.isEmpty) {
-                  return Text(
-                    '0',
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                } else {
-                  return Text(
-                    '${cartProvider.counter}',
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  );
-                }
-              },
+            badgeContent: Text(
+              '${cartProvider.cart.length}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             position: badges.BadgePosition.topEnd(top: 0, end: 2),
             child: IconButton(
               onPressed: () {
                 Navigator.pushNamed(context, "/keranjang");
               },
-              icon: Icon(Icons.shopping_cart),
+              icon: const Icon(Icons.shopping_cart),
             ),
           ),
           const SizedBox(width: 20.0),
@@ -209,33 +193,28 @@ class _PesanViewState extends State<PesanView> {
                                           backgroundColor: primary,
                                           foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
                                         ),
-                                        onPressed: () => saveData(index),
+                                        // kirim cartProvider ke saveData
+                                        onPressed: () => saveData(index, cartProvider),
                                         icon: const Icon(
                                           Icons.add_shopping_cart,
                                           size: 18,
                                         ),
                                         label: const Text("Add to Cart"),
                                       ),
+                                      const SizedBox(width: 6),
                                       ElevatedButton.icon(
                                         style: ElevatedButton.styleFrom(
                                           foregroundColor: primary,
                                           backgroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
+                                            borderRadius: BorderRadius.circular(10),
                                           ),
                                         ),
                                         onPressed: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            "/checkout",
-                                          );
+                                          Navigator.pushNamed(context, "/keranjang");
                                         },
                                         label: const Text("Beli"),
                                       ),
