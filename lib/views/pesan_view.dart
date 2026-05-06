@@ -23,14 +23,6 @@ class _PesanViewState extends State<PesanView> {
   var dBHelper = DBHelper();
   final cartProvider = CartProvider();
   List? barang;
-
-  @override
-  void initState() {
-    super.initState();
-    getBarang();
-    updateCount();
-  }
-
   getBarang() async {
     var result = await ProductService().getBarangUser();
     setState(() {
@@ -41,45 +33,43 @@ class _PesanViewState extends State<PesanView> {
   void updateCount() async {
     await cartProvider.getData();
     setState(() {
-      // Re-trigger build untuk memperbarui badge jika diperlukan
+      cartProvider.counter = cartProvider.cart.length;
     });
   }
 
   void saveData(int index) async {
-    // 1. Ambil data barang dari list berdasarkan index
-    final item = barang![index];
-
-    // 2. Cek apakah barang sudah ada di keranjang (pakai ID)
-    var detail = await dBHelper.getCartListDetail(item.id);
+    var detail = await dBHelper.getCartListDetail(barang![index].id);
     int qty = 0;
-
-    if (detail.isNotEmpty) {
+    if (detail != null && detail.isNotEmpty) {
       qty = detail[0].quantity ?? 0;
     }
+    dBHelper
+        .insert(
+          Cart(
+            id: index,
+            barang_id: barang![index].id.toString(),
+            title: barang![index].title,
+            quantity: qty + 1,
+            harga_beli: double.parse(barang![index].harga.toString()),
+            posterpath: barang![index].posterPath,
+          ),
+        )
+        .then((value) {
+          updateCount();
+          print('Product Added to Cart');
+        })
+    .onError((error, stackTrace) {
+      print(error.toString());
+    })
+    ;
+  }
 
-    // 3. Masukkan ke database menggunakan parameter 'title' (BUKAN nama_barang)
-    await dBHelper.insert(
-      Cart(
-        id: item.id,
-        barang_id: item.id.toString(),
-        title: item.title, // Menggunakan properti 'title' dari model Cart
-        quantity: qty + 1,
-        harga_beli: item.harga,
-        posterpath: item.posterPath,
-      ),
-    );
-
-    // 4. Update UI
+  @override
+  void initState() {
+    //TODO: implement initState
+    super.initState();
+    getBarang();
     updateCount();
-    
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("${item.title} ditambahkan ke keranjang"),
-        backgroundColor: accent,
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
   @override
@@ -96,34 +86,44 @@ class _PesanViewState extends State<PesanView> {
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, right: 12.0),
-            child: badges.Badge(
-              badgeStyle: const badges.BadgeStyle(badgeColor: soft),
-              badgeContent: ListenableBuilder(
-                listenable: cartProvider,
-                builder: (context, child) {
+          badges.Badge(
+            badgeContent: ListenableBuilder(
+              listenable: cartProvider,
+              builder: (context, child) {
+                if (cartProvider.cart.isEmpty) {
                   return Text(
-                    '${cartProvider.counter}',
-                    style: const TextStyle(
-                      color: primaryDark,
-                      fontSize: 12,
+                    '0',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
                       fontWeight: FontWeight.bold,
                     ),
                   );
-                },
-              ),
-              child: IconButton(
-                onPressed: () => Navigator.pushNamed(context, "/keranjang"),
-                icon: const Icon(Icons.shopping_cart_outlined, size: 28),
-              ),
+                } else {
+                  return Text(
+                    '${cartProvider.counter}',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                }
+              },
+            ),
+            position: badges.BadgePosition.topEnd(top: 0, end: 2),
+            child: IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, "/keranjang");
+              },
+              icon: Icon(Icons.shopping_cart),
             ),
           ),
+          const SizedBox(width: 20.0),
         ],
       ),
       body: barang != null
           ? ListView.builder(
               padding: const EdgeInsets.all(12.0),
+              shrinkWrap: true,
               itemCount: barang!.length,
               itemBuilder: (context, index) {
                 return Container(
@@ -154,10 +154,13 @@ class _PesanViewState extends State<PesanView> {
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
-                              width: 110,
-                              color: soft.withOpacity(0.3),
-                              child: const Icon(Icons.inventory_2, color: primary),
-                            ),
+                                  width: 110,
+                                  color: soft.withOpacity(0.3),
+                                  child: const Icon(
+                                    Icons.inventory_2,
+                                    color: primary,
+                                  ),
+                                ),
                           ),
                         ),
                         Expanded(
@@ -167,7 +170,7 @@ class _PesanViewState extends State<PesanView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  barang![index].title ?? "-",
+                                  barang![index].title.toString(),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -198,17 +201,45 @@ class _PesanViewState extends State<PesanView> {
                                 const Spacer(),
                                 Align(
                                   alignment: Alignment.bottomRight,
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: primary,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: primary,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () => saveData(index),
+                                        icon: const Icon(
+                                          Icons.add_shopping_cart,
+                                          size: 18,
+                                        ),
+                                        label: const Text("Add to Cart"),
                                       ),
-                                    ),
-                                    onPressed: () => saveData(index),
-                                    icon: const Icon(Icons.add_shopping_cart, size: 18),
-                                    label: const Text("Beli"),
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          foregroundColor: primary,
+                                          backgroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                        ),
+                                        onPressed: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            "/checkout",
+                                          );
+                                        },
+                                        label: const Text("Beli"),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

@@ -106,7 +106,7 @@ class _BottomNavState extends State<BottomNav> {
               BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: 'Pesan'),
               BottomNavigationBarItem(
                 icon: Icon(Icons.receipt_long_rounded),
-                label: 'Riwayat Pesanan',
+                label: 'History',
               ),
             ],
           )

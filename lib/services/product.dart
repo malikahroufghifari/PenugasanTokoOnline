@@ -92,7 +92,7 @@ class ProductService {
 
     if (res.statusCode == 200) {
       var data = json.decode(result.body);
-      print(data);
+      // print(data);
       if (data["status"] == true) {
         ResponseDataMap response = ResponseDataMap(
           status: true,
@@ -155,6 +155,7 @@ class ProductService {
     }
     Map<String, String> headers = {"Authorization": 'Bearer ${user.token}'};
     var getBarang = await http.get(uri, headers: headers);
+    // print(getBarang.body);
     if (getBarang.statusCode == 200) {
       var data = json.decode(getBarang.body);
       if (data["status"] == true) {

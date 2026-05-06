@@ -5,7 +5,7 @@ class ProductModel {
   String? title;
   String? deskripsi;
   int? stok;
-  int? harga;
+  double? harga;
   String? posterPath;
   ProductModel({
     required this.id,
@@ -20,7 +20,7 @@ class ProductModel {
     title = parsedJson["nama_barang"];
     deskripsi = parsedJson["deskripsi"];
     stok = parsedJson["stok"];
-    harga = parsedJson["harga"];
+    harga = double.parse(parsedJson["harga"].toString());
     posterPath = "${url.BaseUrlTanpaAPi}/${parsedJson["image"]}";
   }
 }

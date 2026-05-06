@@ -25,11 +25,9 @@ class _CartScreenState extends State<CartScreen> {
 
   void updateCount() async {
     await cartProvider.getData();
-    if (mounted) {
-      setState(() {
-        cartProvider.counter = cartProvider.cart.length;
-      });
-    }
+    setState(() {
+      cartProvider.counter = cartProvider.cart.length;
+    });
   }
 
   @override
@@ -52,27 +50,36 @@ class _CartScreenState extends State<CartScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.1),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, right: 12.0),
-            child: badges.Badge(
-              badgeStyle: const badges.BadgeStyle(badgeColor: soft),
-              badgeContent: ListenableBuilder(
-                listenable: cartProvider,
-                builder: (context, child) {
+          badges.Badge(
+            badgeContent: ListenableBuilder(
+              listenable: cartProvider,
+              builder: (context, child) {
+                if (cartProvider.cart.isEmpty) {
                   return Text(
-                    '${cartProvider.counter}',
-                    style: const TextStyle(
-                      color: primaryDark,
+                    '0',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
                       fontWeight: FontWeight.bold,
                     ),
                   );
-                },
-              ),
-              position: badges.BadgePosition.topEnd(top: -2, end: 2),
-              child: const Icon(Icons.shopping_cart, size: 28),
+                } else {
+                  return Text(
+                    '${cartProvider.counter}',
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  );
+                }
+              },
+            ),
+            position: badges.BadgePosition.topEnd(top: 0, end: 2),
+            child: IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.shopping_cart),
             ),
           ),
-          const SizedBox(width: 20.0),
+          SizedBox(width: 20.0),
         ],
       ),
       body: ListenableBuilder(
@@ -83,8 +90,11 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.remove_shopping_cart_outlined,
-                      size: 80, color: soft.withOpacity(0.5)),
+                  Icon(
+                    Icons.remove_shopping_cart_outlined,
+                    size: 80,
+                    color: soft.withOpacity(0.5),
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'Keranjang Anda Kosong',
@@ -99,10 +109,9 @@ class _CartScreenState extends State<CartScreen> {
             );
           } else {
             return ListView.builder(
-              padding: const EdgeInsets.all(12.0),
+              shrinkWrap: true,
               itemCount: cartProvider.cart.length,
               itemBuilder: (context, index) {
-                final item = cartProvider.cart[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -120,78 +129,69 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.all(10.0),
                     child: Row(
                       children: [
-                        /// ✅ IMAGE FIX
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: item.posterpath != null && item.posterpath!.isNotEmpty
-                              ? Image.network(
-                                  item.posterpath!,
-                                  height: 85,
-                                  width: 85,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                          width: 85,
-                                          height: 85,
-                                          color: backgroundSoft),
-                                )
-                              : Container(
-                                  width: 85,
-                                  height: 85,
-                                  color: backgroundSoft,
-                                ),
+                        Image(
+                          height: 85,
+                          width: 85,
+                          image: NetworkImage(
+                            cartProvider.cart[index].posterpath!,
+                          ),
                         ),
 
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
 
-                        /// INFO
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              /// ✅ TITLE FIX
-                              Text(
-                                item.title ?? "Produk",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16.0,
-                                  color: primaryDark,
-                                ),
+                              SizedBox(height: 5.0),
+                              RichText(
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              Text(
-                                "ID: ${item.barang_id ?? "-"}",
-                                style: TextStyle(
-                                    color: Colors.grey.shade500, fontSize: 12),
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              PlusMinusButtons(
-                                addQuantity: () {
-                                  cartProvider.addQuantity(item.id!);
-                                },
-                                deleteQuantity: () {
-                                  cartProvider.deleteQuantity(item.id!);
-                                },
-                                text: item.quantity?.toString() ?? "0",
+                                text: TextSpan(
+                                  text: "Produk: ",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16.0,
+                                    color: primaryDark,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text:
+                                          '${cartProvider.cart[index].title!}\n',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
-
-                        /// DELETE
+                        PlusMinusButtons(
+                          addQuantity: () {
+                            cartProvider.addQuantity(
+                              cartProvider.cart[index].id!,
+                            );
+                          },
+                          deleteQuantity: () {
+                            cartProvider.deleteQuantity(
+                              cartProvider.cart[index].id!,
+                            );
+                          },
+                          text: cartProvider.cart[index].quantity.toString(),
+                        ),
                         IconButton(
                           onPressed: () {
-                            dBHelper.deleteCartItem(item.id!);
-                            cartProvider.removeItem(item.id!);
+                            dBHelper.deleteCartItem(
+                              cartProvider.cart[index].id!,
+                            );
+                            cartProvider.removeItem(
+                              cartProvider.cart[index].id!,
+                            );
                             cartProvider.removeCounter();
                           },
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline_rounded,
                             color: Colors.redAccent,
                             size: 28,
@@ -206,57 +206,34 @@ class _CartScreenState extends State<CartScreen> {
           }
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: ListenableBuilder(
-        listenable: cartProvider,
-        builder: (context, child) {
-          return cartProvider.cart.isEmpty
-              ? const SizedBox.shrink()
-              : FloatingActionButton.extended(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15)),
-                  onPressed: () async {
-                    /// ✅ FIX TYPE INT
-                    List dataList = cartProvider.cart.map((i) {
-                      return {
-                        "barang_id": int.parse(i.barang_id!),
-                        "qty": i.quantity
-                      };
-                    }).toList();
-
-                    var data = {"pesan": dataList};
-
-                    var result = await Pesan().saveToDB(data);
-
-                    if (result.status == true) {
-                      AlertMessage()
-                          .showAlert(context, "Transaksi Berhasil!", true);
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        '/riwayatPesan',
-                        (Route<dynamic> route) => false,
-                      );
-                    } else {
-                      AlertMessage()
-                          .showAlert(context, "Gagal melakukan transaksi", false);
-                    }
-                  },
-                  icon: const Icon(Icons.payments_outlined),
-                  label: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      "Checkout",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                );
+      floatingActionButton: FloatingActionButton.extended(
+        tooltip: "Settings",
+        backgroundColor: accent,
+        foregroundColor: Colors.white,
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        onPressed: () async {
+          List dataList = cartProvider.cart.map((i) {
+            return {"barang_id": i.barang_id, "qty": i.quantity};
+          }).toList();
+          var data = {"pesan": dataList};
+          var result = await Pesan().saveToDB(data);
+          if (result.status == true) {
+            AlertMessage().showAlert(context, "Anda berhasil beli", true);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/riwayatPesan',
+              (Route<dynamic> route) => false,
+            );
+          } else {
+            AlertMessage().showAlert(context, "Anda berhasil beli", true);
+          }
         },
+        icon: const Icon(
+          Icons.shopping_cart_checkout_rounded,
+          color: Colors.white,
+        ),
+        label: const Text("Checkout"),
       ),
     );
   }

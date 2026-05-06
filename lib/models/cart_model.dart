@@ -3,9 +3,9 @@ class Cart {
   String? barang_id;
   String? title;
   int? quantity;
-  int? harga_beli;
+  double? harga_beli;
   String? posterpath;
-  double? voteaverage; // Pastikan ada tanda tanya (?) di sini
+  
 
   Cart({
     required this.id,
@@ -13,8 +13,7 @@ class Cart {
     required this.title,
     required this.quantity,
     required this.harga_beli,
-    required this.posterpath,
-    this.voteaverage, // HAPUS kata 'required' di sini
+    required this.posterpath, 
   });
 
   factory Cart.fromMap(Map<String, dynamic> data) {
@@ -25,7 +24,6 @@ class Cart {
       quantity: data['quantity'],
       harga_beli: data['harga_beli'],
       posterpath: data['image'],
-      voteaverage: data['vote_average'], // Sesuaikan jika ada di DB
     );
   }
 
@@ -37,7 +35,6 @@ class Cart {
       'quantity': quantity,
       'harga_beli': harga_beli,
       'image': posterpath,
-      'vote_average': voteaverage,
     };
   }
 }

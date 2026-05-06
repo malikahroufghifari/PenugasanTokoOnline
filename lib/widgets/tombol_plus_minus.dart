@@ -10,6 +10,7 @@ class PlusMinusButtons extends StatelessWidget {
     required this.deleteQuantity,
     required this.text,
   }) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Row(
